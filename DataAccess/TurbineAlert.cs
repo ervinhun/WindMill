@@ -7,7 +7,7 @@ public partial class TurbineAlert
 {
     public long Id { get; set; }
 
-    public Guid TurbineId { get; set; }
+    public string TurbineId { get; set; } = null!;
 
     public Guid FarmId { get; set; }
 
@@ -18,8 +18,4 @@ public partial class TurbineAlert
     public string Message { get; set; } = null!;
 
     public DateTime? CreatedAt { get; set; }
-
-    public virtual Farm Farm { get; set; } = null!;
-
-    public virtual Turbine Turbine { get; set; } = null!;
 }

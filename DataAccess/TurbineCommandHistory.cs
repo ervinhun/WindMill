@@ -7,7 +7,7 @@ public partial class TurbineCommandHistory
 {
     public long Id { get; set; }
 
-    public Guid TurbineId { get; set; }
+    public string TurbineId { get; set; } = null!;
 
     public Guid UserId { get; set; }
 
@@ -20,8 +20,6 @@ public partial class TurbineCommandHistory
     public string? Reason { get; set; }
 
     public DateTime? CreatedAt { get; set; }
-
-    public virtual Turbine Turbine { get; set; } = null!;
 
     public virtual User User { get; set; } = null!;
 }

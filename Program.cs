@@ -9,7 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 var env = ConfigurationHelper.ConfigureEnvironment(builder);
 builder.Services.AddSingleton(env);
 
-var db = builder.Configuration.GetSection(env["DB_CONNECTION_STRING"]).Value;
+var db = env["DB_CONNECTION_STRING"];
 builder.Services.AddMqttControllers();
 builder.Services.AddControllers();
 builder.Services.AddOpenApiDocument();

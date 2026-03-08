@@ -7,7 +7,7 @@ public partial class TurbineTelemetry
 {
     public long Id { get; set; }
 
-    public Guid TurbineId { get; set; }
+    public string TurbineId { get; set; } = null!;
 
     public DateTime Timestamp { get; set; }
 
@@ -34,6 +34,4 @@ public partial class TurbineTelemetry
     public bool IsRunning { get; set; }
 
     public DateTime? CreatedAt { get; set; }
-
-    public virtual Turbine Turbine { get; set; } = null!;
 }

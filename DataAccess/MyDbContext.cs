@@ -11,11 +11,7 @@ public partial class MyDbContext : DbContext
     {
     }
 
-    public virtual DbSet<Farm> Farms { get; set; }
-
     public virtual DbSet<Role> Roles { get; set; }
-
-    public virtual DbSet<Turbine> Turbines { get; set; }
 
     public virtual DbSet<TurbineAlert> TurbineAlerts { get; set; }
 
@@ -31,22 +27,6 @@ public partial class MyDbContext : DbContext
     {
         modelBuilder.HasPostgresExtension("uuid-ossp");
 
-        modelBuilder.Entity<Farm>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("farms_pkey");
-
-            entity.ToTable("farms");
-
-            entity.Property(e => e.Id)
-                .HasDefaultValueSql("uuid_generate_v4()")
-                .HasColumnName("id");
-            entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("CURRENT_TIMESTAMP")
-                .HasColumnName("created_at");
-            entity.Property(e => e.Location).HasColumnName("location");
-            entity.Property(e => e.Name).HasColumnName("name");
-        });
-
         modelBuilder.Entity<Role>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("roles_pkey");
@@ -60,29 +40,6 @@ public partial class MyDbContext : DbContext
                 .HasColumnName("id");
             entity.Property(e => e.Description).HasColumnName("description");
             entity.Property(e => e.Name).HasColumnName("name");
-        });
-
-        modelBuilder.Entity<Turbine>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("turbines_pkey");
-
-            entity.ToTable("turbines");
-
-            entity.HasIndex(e => e.TurbineIdentifier, "turbines_turbine_identifier_key").IsUnique();
-
-            entity.Property(e => e.Id)
-                .HasDefaultValueSql("uuid_generate_v4()")
-                .HasColumnName("id");
-            entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("CURRENT_TIMESTAMP")
-                .HasColumnName("created_at");
-            entity.Property(e => e.FarmId).HasColumnName("farm_id");
-            entity.Property(e => e.TurbineIdentifier).HasColumnName("turbine_identifier");
-            entity.Property(e => e.TurbineName).HasColumnName("turbine_name");
-
-            entity.HasOne(d => d.Farm).WithMany(p => p.Turbines)
-                .HasForeignKey(d => d.FarmId)
-                .HasConstraintName("fk_farm");
         });
 
         modelBuilder.Entity<TurbineAlert>(entity =>
@@ -102,14 +59,6 @@ public partial class MyDbContext : DbContext
             entity.Property(e => e.Severity).HasColumnName("severity");
             entity.Property(e => e.Timestamp).HasColumnName("timestamp");
             entity.Property(e => e.TurbineId).HasColumnName("turbine_id");
-
-            entity.HasOne(d => d.Farm).WithMany(p => p.TurbineAlerts)
-                .HasForeignKey(d => d.FarmId)
-                .HasConstraintName("fk_alert_farm");
-
-            entity.HasOne(d => d.Turbine).WithMany(p => p.TurbineAlerts)
-                .HasForeignKey(d => d.TurbineId)
-                .HasConstraintName("fk_alert_turbine");
         });
 
         modelBuilder.Entity<TurbineCommandHistory>(entity =>
@@ -130,10 +79,6 @@ public partial class MyDbContext : DbContext
             entity.Property(e => e.TurbineId).HasColumnName("turbine_id");
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.Value).HasColumnName("value");
-
-            entity.HasOne(d => d.Turbine).WithMany(p => p.TurbineCommandHistories)
-                .HasForeignKey(d => d.TurbineId)
-                .HasConstraintName("fk_command_turbine");
 
             entity.HasOne(d => d.User).WithMany(p => p.TurbineCommandHistories)
                 .HasForeignKey(d => d.UserId)
@@ -159,10 +104,6 @@ public partial class MyDbContext : DbContext
                 .HasColumnName("settings");
             entity.Property(e => e.TurbineId).HasColumnName("turbine_id");
             entity.Property(e => e.UserId).HasColumnName("user_id");
-
-            entity.HasOne(d => d.Turbine).WithMany(p => p.TurbineSettingsHistories)
-                .HasForeignKey(d => d.TurbineId)
-                .HasConstraintName("fk_settings_turbine");
 
             entity.HasOne(d => d.User).WithMany(p => p.TurbineSettingsHistories)
                 .HasForeignKey(d => d.UserId)
@@ -193,10 +134,6 @@ public partial class MyDbContext : DbContext
             entity.Property(e => e.Vibration).HasColumnName("vibration");
             entity.Property(e => e.WindDirection).HasColumnName("wind_direction");
             entity.Property(e => e.WindSpeed).HasColumnName("wind_speed");
-
-            entity.HasOne(d => d.Turbine).WithMany(p => p.TurbineTelemetries)
-                .HasForeignKey(d => d.TurbineId)
-                .HasConstraintName("fk_turbine");
         });
 
         modelBuilder.Entity<User>(entity =>
