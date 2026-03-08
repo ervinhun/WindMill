@@ -1,4 +1,4 @@
-dotnet ef dbcontext scaffold "$CONN_STR" Npgsql.EntityFrameworkCore.PostgreSQL   --output-dir DataAccess      --context-namespace MyDbContext   --no-onconfiguring        --schema public   --force
+dotnet ef dbcontext scaffold "$DB_CONNECTION" Npgsql.EntityFrameworkCore.PostgreSQL   --output-dir DataAccess      --context MyDbContext   --no-onconfiguring        --schema public   --force
 
 
 

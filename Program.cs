@@ -7,6 +7,8 @@ using WindMill.Util;
 
 var builder = WebApplication.CreateBuilder(args);
 var env = ConfigurationHelper.ConfigureEnvironment(builder);
+builder.Services.AddSingleton(env);
+
 var db = builder.Configuration.GetSection(env["DB_CONNECTION_STRING"]).Value;
 builder.Services.AddMqttControllers();
 builder.Services.AddControllers();
@@ -19,7 +21,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(env["SECRET"]))
     });
 builder.Services.AddAuthorization();
-//builder.Services.AddDbContext<MyDbContext>(options => options.UseNpgsql(db));
+builder.Services.AddDbContext<WindMill.DataAccess.MyDbContext>(options => options.UseNpgsql(db));
 var app = builder.Build();
 
 app.MapControllers();
@@ -31,6 +33,3 @@ await mqtt.ConnectAsync("broker.hivemq.com", 1883);
 
 
 await app.RunAsync();
-
-
-

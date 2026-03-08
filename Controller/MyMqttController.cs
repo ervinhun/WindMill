@@ -14,6 +14,6 @@ public class MyMqttController(ILogger<MyMqttController> logger) : MqttController
     [MqttRoute("farm/+/windmill/{turbineId}/alert")]
     public void SubscribeToAlerts(string turbineId, object payload)
     {
-        logger.LogWarning($"Alert from Turbine: {turbineId} - {JsonSerializer.Serialize(payload)}");
+        logger.LogWarning(JsonSerializer.Serialize(payload));
     }
 }
