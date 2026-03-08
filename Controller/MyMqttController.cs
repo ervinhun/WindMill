@@ -1,54 +1,29 @@
-using System.Data.Common;
 using System.Text.Json;
 using Mqtt.Controllers;
 using Newtonsoft.Json;
 using WindMill.DataAccess;
 using WindMill.Dto.Mqtt;
-using WindMill.DataAccess;
+using WindMill.Util;
 using JsonException = System.Text.Json.JsonException;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace WindMill.Controller;
 
-public class MyMqttController(ILogger<MyMqttController> logger, MyDbContext ctx) : MqttController
+public class MyMqttController(ILogger<MyMqttController> logger, SaveData sd) : MqttController
 {
     [MqttRoute("farm/eb778064-da41-4f54-b0f0-e532f349d6da/windmill/{turbineId}/telemetry")]
     public async Task SubscribeToTelemetry(string turbineId, object payload)
     {
         var data = JsonSerializer.Serialize(payload);
-
         // Deserialize the JSON payload into a TurbineMetric object and save the turbine's name and status
         try
         {
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             var metric = JsonSerializer.Deserialize<TurbineMetric>(data, options);
-            if (metric == null) throw new JsonSerializationException("Anyád!");
+            if (metric == null) throw new JsonSerializationException("Metric is null after deserialization.");
             logger.LogInformation(
                 $"Processing {metric.TurbineName} (ID: {metric.TurbineId}). Status: {metric.Status}");
-            
-            var telemetry = new TurbineTelemetry
-            {
-                TurbineId = metric.TurbineId,
-                Timestamp = metric.Timestamp,
-                WindSpeed = metric.WindSpeed,
-                PowerOutput = metric.PowerOutput,
-                NacelleDirection = metric.NacelleDirection,
-                BladePitch = metric.BladePitch,
-                GeneratorTemp = metric.GeneratorTemperature,
-                GearboxTemp = metric.GearboxTemperature,
-                Vibration = metric.Vibration,
-                IsRunning = metric.Status.Equals("running", StringComparison.OrdinalIgnoreCase),
-                CreatedAt = DateTime.UtcNow
-            };
-            try
-            {
-                ctx.TurbineTelemetries.Add(telemetry);
-                await ctx.SaveChangesAsync();
-            }
-            catch(DbException ex)
-            {
-                logger.LogError($"Db Error: {ex.Message}");
-            }
+            await sd.SaveTelemetry(metric);
         }
         catch (JsonException ex)
         {
@@ -57,8 +32,21 @@ public class MyMqttController(ILogger<MyMqttController> logger, MyDbContext ctx)
     }
 
     [MqttRoute("farm/+/windmill/{turbineId}/alert")]
-    public void SubscribeToAlerts(string turbineId, object payload)
+    public async Task SubscribeToAlerts(string turbineId, object payload)
     {
-        logger.LogWarning(JsonSerializer.Serialize(payload));
+        var data = JsonSerializer.Serialize(payload);
+        try
+        {
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            var alert = JsonSerializer.Deserialize<TurbineAlert>(data, options);
+            if (alert == null) throw new JsonSerializationException("Alert is null after deserialization.");
+            logger.LogInformation(
+                $"Processing {alert.Severity} (ID: {alert.TurbineId}). Message: {alert.Message}");
+            await sd.SaveAlert(alert);
+        }
+        catch (JsonException ex)
+        {
+            logger.LogError($"Failed to deserialize alert data: {ex.Message}");
+        }
     }
 }

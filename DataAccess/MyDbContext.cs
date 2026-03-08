@@ -123,6 +123,7 @@ public partial class MyDbContext : DbContext
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnName("created_at");
+            entity.Property(e => e.FarmId).HasColumnName("farm_id");
             entity.Property(e => e.GearboxTemp).HasColumnName("gearbox_temp");
             entity.Property(e => e.GeneratorTemp).HasColumnName("generator_temp");
             entity.Property(e => e.IsRunning).HasColumnName("is_running");
@@ -131,6 +132,7 @@ public partial class MyDbContext : DbContext
             entity.Property(e => e.RotorSpeed).HasColumnName("rotor_speed");
             entity.Property(e => e.Timestamp).HasColumnName("timestamp");
             entity.Property(e => e.TurbineId).HasColumnName("turbine_id");
+            entity.Property(e => e.TurbineName).HasColumnName("turbine_name");
             entity.Property(e => e.Vibration).HasColumnName("vibration");
             entity.Property(e => e.WindDirection).HasColumnName("wind_direction");
             entity.Property(e => e.WindSpeed).HasColumnName("wind_speed");

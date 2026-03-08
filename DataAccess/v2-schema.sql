@@ -11,6 +11,8 @@ CREATE TABLE turbine_telemetry
     id                  BIGSERIAL PRIMARY KEY,
 
     turbine_id          TEXT                     NOT NULL,
+    turbine_name        TEXT                     NOT NULL,
+    farm_id             TEXT                     NOT NULL,
     timestamp           TIMESTAMP WITH TIME ZONE NOT NULL,
 
     wind_speed          DOUBLE PRECISION,

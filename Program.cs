@@ -22,6 +22,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 builder.Services.AddAuthorization();
 builder.Services.AddDbContext<WindMill.DataAccess.MyDbContext>(options => options.UseNpgsql(db));
+builder.Services.AddScoped<SaveData>();
 var app = builder.Build();
 
 app.MapControllers();

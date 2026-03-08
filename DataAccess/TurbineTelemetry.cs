@@ -9,6 +9,10 @@ public partial class TurbineTelemetry
 
     public string TurbineId { get; set; } = null!;
 
+    public string TurbineName { get; set; } = null!;
+
+    public string FarmId { get; set; } = null!;
+
     public DateTime Timestamp { get; set; }
 
     public double? WindSpeed { get; set; }
