@@ -1,6 +1,7 @@
 using System.Runtime.Serialization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Mqtt.Controllers;
 
@@ -8,6 +9,7 @@ namespace WindMill.Controller;
 
 [ApiController]
 [Route("api/[controller]")]
+//[Authorize]
 public class WebClientController(IMqttClientService mqtt, ILogger<MyMqttController> logger) : ControllerBase
 {
     [HttpPost(nameof(SetAction))]

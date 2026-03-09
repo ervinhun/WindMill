@@ -17,8 +17,6 @@ public partial class MyDbContext : DbContext
 
     public virtual DbSet<TurbineCommandHistory> TurbineCommandHistories { get; set; }
 
-    public virtual DbSet<TurbineSettingsHistory> TurbineSettingsHistories { get; set; }
-
     public virtual DbSet<TurbineTelemetry> TurbineTelemetries { get; set; }
 
     public virtual DbSet<User> Users { get; set; }
@@ -86,31 +84,6 @@ public partial class MyDbContext : DbContext
                 .HasConstraintName("fk_command_user");
         });
 
-        modelBuilder.Entity<TurbineSettingsHistory>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("turbine_settings_history_pkey");
-
-            entity.ToTable("turbine_settings_history");
-
-            entity.HasIndex(e => new { e.TurbineId, e.CreatedAt }, "idx_settings_turbine_time").IsDescending(false, true);
-
-            entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.Action).HasColumnName("action");
-            entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("CURRENT_TIMESTAMP")
-                .HasColumnName("created_at");
-            entity.Property(e => e.Settings)
-                .HasColumnType("jsonb")
-                .HasColumnName("settings");
-            entity.Property(e => e.TurbineId).HasColumnName("turbine_id");
-            entity.Property(e => e.UserId).HasColumnName("user_id");
-
-            entity.HasOne(d => d.User).WithMany(p => p.TurbineSettingsHistories)
-                .HasForeignKey(d => d.UserId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("fk_settings_user");
-        });
-
         modelBuilder.Entity<TurbineTelemetry>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("turbine_telemetry_pkey");
@@ -158,6 +131,7 @@ public partial class MyDbContext : DbContext
                 .HasDefaultValue(false)
                 .HasColumnName("is_deleted");
             entity.Property(e => e.Name).HasColumnName("name");
+            entity.Property(e => e.Password).HasColumnName("password");
             entity.Property(e => e.RoleId).HasColumnName("role_id");
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")

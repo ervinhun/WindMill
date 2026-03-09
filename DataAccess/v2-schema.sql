@@ -74,8 +74,10 @@ CREATE TABLE users
 
     name       TEXT        NOT NULL,
     username   TEXT UNIQUE NOT NULL,
+    password   TEXT        NOT NULL,
 
     role_id    UUID        NOT NULL,
+    
 
     is_deleted BOOLEAN                  DEFAULT FALSE,
 
@@ -117,36 +119,6 @@ CREATE TABLE turbine_command_history
 
 CREATE INDEX idx_command_turbine_time
     ON turbine_command_history (turbine_id, created_at DESC);
-
---------------------------------------------------
--- OPTIONAL SETTINGS HISTORY (JSON BASED)
--- Useful if commands become dynamic
---------------------------------------------------
-
-CREATE TABLE turbine_settings_history
-(
-    id         BIGSERIAL PRIMARY KEY,
-
-    turbine_id TEXT NOT NULL,
-    user_id    UUID NOT NULL,
-
-    action     TEXT NOT NULL,
-    settings   JSONB,
-
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT fk_settings_turbine
-        FOREIGN KEY (turbine_id)
-            REFERENCES turbines (id)
-            ON DELETE CASCADE,
-
-    CONSTRAINT fk_settings_user
-        FOREIGN KEY (user_id)
-            REFERENCES users (id)
-);
-
-CREATE INDEX idx_settings_turbine_time
-    ON turbine_settings_history (turbine_id, created_at DESC);
 
 --------------------------------------------------
 -- TRIGGER TO AUTO UPDATE updated_at
