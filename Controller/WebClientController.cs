@@ -9,7 +9,7 @@ namespace WindMill.Controller;
 
 [ApiController]
 [Route("api/[controller]")]
-//[Authorize]
+[Authorize]
 public class WebClientController(IMqttClientService mqtt, ILogger<MyMqttController> logger) : ControllerBase
 {
     [HttpPost(nameof(SetAction))]
