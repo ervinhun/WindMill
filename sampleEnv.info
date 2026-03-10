@@ -1,0 +1,8 @@
+FARM_ID=GUID of the windFarm
+
+DB_CONNECTION_STRING=Host=localhost;Port=5432;Database=WindMill;Username=dbUser;Password=dbPassword
+
+SECRET=superSecretKey
+
+SUPER_USER_NAME=admin
+SUPER_PASSWORD=adminSuperStrongPassword

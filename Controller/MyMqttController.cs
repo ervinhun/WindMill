@@ -1,19 +1,53 @@
 using System.Text.Json;
 using Mqtt.Controllers;
+using Newtonsoft.Json;
+using WindMill.DataAccess;
+using WindMill.Dto.Mqtt;
+using WindMill.Util;
+using JsonException = System.Text.Json.JsonException;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace WindMill.Controller;
 
-public class MyMqttController(ILogger<MyMqttController> logger) : MqttController
+public class MyMqttController(ILogger<MyMqttController> logger, SaveData sd) : MqttController
 {
     [MqttRoute("farm/eb778064-da41-4f54-b0f0-e532f349d6da/windmill/{turbineId}/telemetry")]
-    public void SubscribeToTelemetry(string turbineId, object payload)
+    public async Task SubscribeToTelemetry(string turbineId, object payload)
     {
-        logger.LogInformation(JsonSerializer.Serialize(payload));
+        var data = JsonSerializer.Serialize(payload);
+        // Deserialize the JSON payload into a TurbineMetric object and save the turbine's name and status
+        try
+        {
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            var metric = JsonSerializer.Deserialize<TurbineMetric>(data, options);
+            if (metric == null) throw new JsonSerializationException("Metric is null after deserialization.");
+            logger.LogInformation(
+                $"Processing {metric.TurbineName} (ID: {metric.TurbineId}). Status: {metric.Status}");
+            if (metric.Status != null && metric.Status != "stopped")
+                await sd.SaveTelemetry(metric);
+        }
+        catch (JsonException ex)
+        {
+            logger.LogError($"Failed to deserialize telemetry data: {ex.Message}");
+        }
     }
-    
+
     [MqttRoute("farm/+/windmill/{turbineId}/alert")]
-    public void SubscribeToAlerts(string turbineId, object payload)
+    public async Task SubscribeToAlerts(string turbineId, object payload)
     {
-        logger.LogWarning($"Alert from Turbine: {turbineId} - {JsonSerializer.Serialize(payload)}");
+        var data = JsonSerializer.Serialize(payload);
+        try
+        {
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            var alert = JsonSerializer.Deserialize<TurbineAlert>(data, options);
+            if (alert == null) throw new JsonSerializationException("Alert is null after deserialization.");
+            logger.LogInformation(
+                $"Processing {alert.Severity} (ID: {alert.TurbineId}). Message: {alert.Message}");
+            await sd.SaveAlert(alert);
+        }
+        catch (JsonException ex)
+        {
+            logger.LogError($"Failed to deserialize alert data: {ex.Message}");
+        }
     }
 }
