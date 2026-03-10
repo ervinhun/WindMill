@@ -1,0 +1,29 @@
+# Build outputs
+bin/
+obj/
+
+# Local git and IDE metadata
+.git/
+.gitignore
+.idea/
+.vs/
+.vscode/
+
+# User-specific files
+*.user
+*.suo
+*.swp
+*.tmp
+
+# Local environment and secrets
+.env
+.env.*
+
+# Docker overrides
+docker-compose.override.yml
+compose.override.yml
+
+# OS files
+.DS_Store
+Thumbs.db
+

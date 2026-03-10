@@ -1,5 +1,6 @@
 using WindMill.Dto.Mqtt;
 using WindMill.DataAccess;
+using WindMill.Dto.Web;
 
 namespace WindMill.Util;
 
@@ -43,5 +44,36 @@ public class SaveData(MyDbContext ctx)
         };
         ctx.TurbineAlerts.Add(dbAlert);
         await ctx.SaveChangesAsync();
+    }
+    
+    public async Task<HistoryResponseDto> SaveHistory(HistoryDto history)
+    {
+        var dbHistory = new TurbineCommandHistory()
+        {
+            TurbineId = history.TurbineId,
+            UserId = history.UserId,
+            Action = history.Action,
+            Value = history.Value,
+            Angle = history.Angle,
+            Reason = history.Reason,
+        };
+        ctx.TurbineCommandHistories.Add(dbHistory);
+        await ctx.SaveChangesAsync();
+        return convertTurbineHistoryToResponseDto(dbHistory);
+    }
+    
+    private HistoryResponseDto convertTurbineHistoryToResponseDto(TurbineCommandHistory history)
+    {
+        return new HistoryResponseDto()
+        {
+            Id = history.Id,
+            TurbineId = history.TurbineId,
+            UserId = history.UserId,
+            Action = history.Action,
+            Value = history.Value,
+            Angle = history.Angle,
+            Reason = history.Reason,
+            CreatedAt = history.CreatedAt ?? DateTime.UtcNow
+        };
     }
 }

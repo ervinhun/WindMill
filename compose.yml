@@ -1,24 +1,19 @@
 services:
-  
-  #  windmill:
-  #    image: windmill
-  #    build:
-  #      context: .
-  #      dockerfile: Dockerfile
-  
+
   postgres:
     image: postgres:16
     container_name: pg-local-windmill
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: WindMill
+      POSTGRES_DB: windmill
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-  
-  pgAdmin:
+    restart: unless-stopped
+
+  pgadmin:
     image: dpage/pgadmin4
     container_name: pgadmin-windmill
     environment:
@@ -28,6 +23,7 @@ services:
       - "5050:80"
     depends_on:
       - postgres
+    restart: unless-stopped
 
 volumes:
   pgdata:
