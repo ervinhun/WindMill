@@ -36,11 +36,11 @@ public class SaveData(MyDbContext ctx)
     {
         var dbAlert = new TurbineAlert
         {
+            FarmId = alert.FarmId,
             TurbineId = alert.TurbineId,
             Timestamp = alert.Timestamp,
             Severity = alert.Severity,
             Message = alert.Message,
-            CreatedAt = DateTime.UtcNow
         };
         ctx.TurbineAlerts.Add(dbAlert);
         await ctx.SaveChangesAsync();

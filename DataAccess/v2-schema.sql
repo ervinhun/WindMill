@@ -40,11 +40,11 @@ CREATE TABLE turbine_alerts
     id         BIGSERIAL PRIMARY KEY,
 
     turbine_id TEXT                     NOT NULL,
-    farm_id    UUID                     NOT NULL,
+    farm_id    TEXT,
 
     timestamp  TIMESTAMP WITH TIME ZONE NOT NULL,
 
-    severity   TEXT CHECK (severity IN ('info', 'warning', 'critical')),
+    severity   TEXT                     NOT NULL,
     message    TEXT                     NOT NULL,
 
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP

@@ -9,11 +9,11 @@ public partial class TurbineAlert
 
     public string TurbineId { get; set; } = null!;
 
-    public Guid FarmId { get; set; }
+    public string? FarmId { get; set; }
 
     public DateTime Timestamp { get; set; }
 
-    public string? Severity { get; set; }
+    public string Severity { get; set; } = null!;
 
     public string Message { get; set; } = null!;
 
