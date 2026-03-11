@@ -4,6 +4,9 @@ using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Mqtt.Controllers;
+using StateleSSE.AspNetCore;
+using StateleSSE.AspNetCore.EfRealtime;
+using StateleSSE.AspNetCore.GroupRealtime;
 using WindMill.DataAccess;
 using WindMill.Dto.Web;
 using WindMill.Util;
@@ -12,9 +15,35 @@ namespace WindMill.Controller;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
-public class WebClientController(IMqttClientService mqtt, ILogger<MyMqttController> logger, MyDbContext ctx) : ControllerBase
+// TODO: [Authorize]
+public class WebClientController(
+    ISseBackplane backplane,
+    IMqttClientService mqtt,
+    IRealtimeManager realtimeManager,
+    IGroupRealtimeManager groupRealtimeManager,
+    ILogger<MyMqttController> logger,
+    MyDbContext ctx) : RealtimeControllerBase(backplane)
 {
+    [HttpGet(nameof(GetTelemetry))]
+    public async Task<RealtimeListenResponse<List<TurbineTelemetry>>> GetTelemetry(string connectionId)
+    {
+        var group = "turbine-telemetry";
+        await backplane.Groups.AddToGroupAsync(connectionId, group);
+        realtimeManager.Subscribe<MyDbContext>(connectionId, group,
+            criteria: snapshot =>
+            {
+                return snapshot.HasChanges<TurbineTelemetry>();
+            },
+            query: async context =>
+            {
+                return context.TurbineTelemetries.OrderByDescending(t => t.Timestamp).Take(100).ToList();
+            }
+        );
+
+        return new RealtimeListenResponse<List<TurbineTelemetry>>(group, ctx.TurbineTelemetries.ToList());
+    }
+
+
     [HttpPost(nameof(SetAction))]
     public async Task<IActionResult> SetAction([FromBody] ActionRequest request)
     {
@@ -31,7 +60,7 @@ public class WebClientController(IMqttClientService mqtt, ILogger<MyMqttControll
         {
             action = JsonNamingPolicy.CamelCase.ConvertName(validatedAction.ToString())
         };
-        
+
         var historyToInsert = new HistoryDto()
         {
             TurbineId = request.TurbineId,
@@ -78,7 +107,7 @@ public class WebClientController(IMqttClientService mqtt, ILogger<MyMqttControll
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
-        
+
         var payload = JsonSerializer.Serialize(command, jsonOptions);
         logger.LogInformation($"Publishing command to topic: {topic} with payload: {payload} at {DateTime.UtcNow}");
         await mqtt.PublishAsync(topic, payload);
@@ -90,19 +119,18 @@ public class WebClientController(IMqttClientService mqtt, ILogger<MyMqttControll
     {
         return string.IsNullOrEmpty(value);
     }
-    
+
     private User getUserFromUserName(string userName)
     {
         var user = ctx.Users.FirstOrDefault(u => u.Username == userName);
         if (user == null)
         {
-            throw new Exception($"User with username {userName} not found.");
+            throw new KeyNotFoundException($"User with username {userName} not found.");
         }
+
         return user;
     }
 }
-
-
 
 public class ActionRequest
 {
