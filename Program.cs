@@ -54,7 +54,12 @@ builder.Services.AddDbContext<WindMill.DataAccess.MyDbContext>((sp, options) =>
     options.UseNpgsql(db);
     options.AddEfRealtimeInterceptor(sp);
 });
-builder.Services.AddCors();
+builder.Services.AddCors(options => options.AddPolicy("AllowAll", policy =>
+{
+    policy.AllowAnyOrigin()
+        .AllowAnyMethod()
+        .AllowAnyHeader();
+}));
 builder.Services.AddScoped<SaveData>();
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<DataSeeder>();
@@ -66,11 +71,7 @@ app.UseAuthorization();
 app.MapControllers();
 app.UseOpenApi();
 app.UseSwaggerUi();
-app.UseCors(c => 
-    c.AllowAnyHeader()
-        .AllowAnyMethod()
-        .AllowAnyOrigin()
-        .SetIsOriginAllowed(_ => true));
+app.UseCors("AllowAll");
 var mqtt = app.Services.GetRequiredService<IMqttClientService>();
 await mqtt.ConnectAsync("broker.hivemq.com", 1883);
 
@@ -87,5 +88,3 @@ using (var scope = app.Services.CreateScope())
 }
 
 await app.RunAsync();
-
-

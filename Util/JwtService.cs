@@ -9,7 +9,7 @@ public class JwtService(IConfiguration configuration)
 {
     public string GenerateToken(string userId, string userName, string roleName)
     {
-        var secret = configuration.GetSection("Secret").Value ??
+        var secret = configuration.GetSection("SECRET").Value ??
                      throw new InvalidOperationException("JWT Secret not configured");
         var claims = new[]
         {

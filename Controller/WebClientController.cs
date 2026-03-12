@@ -13,7 +13,7 @@ using WindMill.Util;
 
 namespace WindMill.Controller;
 
-[Authorize]
+//[Authorize]
 public class WebClientController(
     ISseBackplane backplane,
     IMqttClientService mqtt,
