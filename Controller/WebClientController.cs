@@ -4,21 +4,54 @@ using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Mqtt.Controllers;
+using StateleSSE.AspNetCore;
+using StateleSSE.AspNetCore.EfRealtime;
+using StateleSSE.AspNetCore.GroupRealtime;
 using WindMill.DataAccess;
 using WindMill.Dto.Web;
 using WindMill.Util;
 
 namespace WindMill.Controller;
 
-[ApiController]
-[Route("api/[controller]")]
-[Authorize]
-public class WebClientController(IMqttClientService mqtt, ILogger<MyMqttController> logger, MyDbContext ctx) : ControllerBase
+public class WebClientController(
+    ISseBackplane backplane,
+    IMqttClientService mqtt,
+    IRealtimeManager realtimeManager,
+    IGroupRealtimeManager groupRealtimeManager,
+    ILogger<MyMqttController> logger,
+    MyDbContext ctx) : RealtimeControllerBase(backplane)
 {
+    [HttpGet(nameof(GetTelemetry))]
+    public async Task<RealtimeListenResponse<List<TurbineTelemetry>>> GetTelemetry(string connectionId)
+    {
+        var group = "turbine-telemetry";
+        await backplane.Groups.AddToGroupAsync(connectionId, group);
+        realtimeManager.Subscribe<MyDbContext>(connectionId, group,
+            criteria: snapshot => { return snapshot.HasChanges<TurbineTelemetry>(); },
+            query: async context => { return context.TurbineTelemetries.ToList(); }
+        );
+        var initialData = ctx.TurbineTelemetries.OrderByDescending(t => t.Timestamp).Take(200).ToList();
+
+        return new RealtimeListenResponse<List<TurbineTelemetry>>(group, initialData);
+    }
+
+    [HttpGet(nameof(GetAlert))]
+    public async Task<RealtimeListenResponse<List<TurbineAlert>>> GetAlert(string connectionId)
+    {
+        var group = "turbine-alert";
+        await backplane.Groups.AddToGroupAsync(connectionId, group);
+        realtimeManager.Subscribe<MyDbContext>(connectionId, group,
+            criteria: snapshot => { return snapshot.HasChanges<TurbineAlert>(); },
+            query: async context => { return context.TurbineAlerts.OrderByDescending(t => t.Timestamp).ToList(); }
+        );
+        return new RealtimeListenResponse<List<TurbineAlert>>(group, ctx.TurbineAlerts.ToList());
+    }
+
+[Authorize]
     [HttpPost(nameof(SetAction))]
     public async Task<IActionResult> SetAction([FromBody] ActionRequest request)
     {
-        var user = getUserFromUserName(User.Identity?.Name);
+        var user = GetUserFromUserName(User.Identity?.Name);
         if (IsBlank(request.action) ||
             !Enum.TryParse<ActionType>(request.action, true, out var validatedAction))
         {
@@ -31,7 +64,7 @@ public class WebClientController(IMqttClientService mqtt, ILogger<MyMqttControll
         {
             action = JsonNamingPolicy.CamelCase.ConvertName(validatedAction.ToString())
         };
-        
+
         var historyToInsert = new HistoryDto()
         {
             TurbineId = request.TurbineId,
@@ -78,7 +111,7 @@ public class WebClientController(IMqttClientService mqtt, ILogger<MyMqttControll
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
-        
+
         var payload = JsonSerializer.Serialize(command, jsonOptions);
         logger.LogInformation($"Publishing command to topic: {topic} with payload: {payload} at {DateTime.UtcNow}");
         await mqtt.PublishAsync(topic, payload);
@@ -90,19 +123,18 @@ public class WebClientController(IMqttClientService mqtt, ILogger<MyMqttControll
     {
         return string.IsNullOrEmpty(value);
     }
-    
-    private User getUserFromUserName(string userName)
+
+    private User GetUserFromUserName(string userName)
     {
         var user = ctx.Users.FirstOrDefault(u => u.Username == userName);
         if (user == null)
         {
-            throw new Exception($"User with username {userName} not found.");
+            throw new KeyNotFoundException($"User with username {userName} not found.");
         }
+
         return user;
     }
 }
-
-
 
 public class ActionRequest
 {
