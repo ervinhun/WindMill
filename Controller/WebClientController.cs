@@ -13,7 +13,6 @@ using WindMill.Util;
 
 namespace WindMill.Controller;
 
-//[Authorize]
 public class WebClientController(
     ISseBackplane backplane,
     IMqttClientService mqtt,
@@ -48,7 +47,7 @@ public class WebClientController(
         return new RealtimeListenResponse<List<TurbineAlert>>(group, ctx.TurbineAlerts.ToList());
     }
 
-
+[Authorize]
     [HttpPost(nameof(SetAction))]
     public async Task<IActionResult> SetAction([FromBody] ActionRequest request)
     {

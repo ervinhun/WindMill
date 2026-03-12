@@ -20,7 +20,6 @@ public class MyMqttController(ILogger<MyMqttController> logger, SaveData sd) : M
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             var metric = JsonSerializer.Deserialize<TurbineMetric>(data, options);
             if (metric == null) throw new JsonSerializationException("Metric is null after deserialization.");
-            if (metric.Status != null && metric.Status != "stopped")
                 await sd.SaveTelemetry(metric);
         }
         catch (JsonException ex)
