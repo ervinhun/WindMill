@@ -13,8 +13,6 @@ using WindMill.Util;
 
 namespace WindMill.Controller;
 
-[ApiController]
-[Route("api/[controller]")]
 // TODO: [Authorize]
 public class WebClientController(
     ISseBackplane backplane,
@@ -30,24 +28,31 @@ public class WebClientController(
         var group = "turbine-telemetry";
         await backplane.Groups.AddToGroupAsync(connectionId, group);
         realtimeManager.Subscribe<MyDbContext>(connectionId, group,
-            criteria: snapshot =>
-            {
-                return snapshot.HasChanges<TurbineTelemetry>();
-            },
-            query: async context =>
-            {
-                return context.TurbineTelemetries.OrderByDescending(t => t.Timestamp).Take(100).ToList();
-            }
+            criteria: snapshot => { return snapshot.HasChanges<TurbineTelemetry>(); },
+            query: async context => { return context.TurbineTelemetries.ToList(); }
         );
+        var initialData = ctx.TurbineTelemetries.OrderByDescending(t => t.Timestamp).Take(200).ToList();
 
-        return new RealtimeListenResponse<List<TurbineTelemetry>>(group, ctx.TurbineTelemetries.ToList());
+        return new RealtimeListenResponse<List<TurbineTelemetry>>(group, initialData);
+    }
+
+    [HttpGet(nameof(GetAlert))]
+    public async Task<RealtimeListenResponse<List<TurbineAlert>>> GetAlert(string connectionId)
+    {
+        var group = "turbine-alert";
+        await backplane.Groups.AddToGroupAsync(connectionId, group);
+        realtimeManager.Subscribe<MyDbContext>(connectionId, group,
+            criteria: snapshot => { return snapshot.HasChanges<TurbineAlert>(); },
+            query: async context => { return context.TurbineAlerts.OrderByDescending(t => t.Timestamp).ToList(); }
+        );
+        return new RealtimeListenResponse<List<TurbineAlert>>(group, ctx.TurbineAlerts.ToList());
     }
 
 
     [HttpPost(nameof(SetAction))]
     public async Task<IActionResult> SetAction([FromBody] ActionRequest request)
     {
-        var user = getUserFromUserName(User.Identity?.Name);
+        var user = GetUserFromUserName(User.Identity?.Name);
         if (IsBlank(request.action) ||
             !Enum.TryParse<ActionType>(request.action, true, out var validatedAction))
         {
@@ -120,7 +125,7 @@ public class WebClientController(
         return string.IsNullOrEmpty(value);
     }
 
-    private User getUserFromUserName(string userName)
+    private User GetUserFromUserName(string userName)
     {
         var user = ctx.Users.FirstOrDefault(u => u.Username == userName);
         if (user == null)

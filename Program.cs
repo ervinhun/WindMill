@@ -9,6 +9,7 @@ using NSwag.Generation.Processors.Security;
 using WindMill.Util;
 using StateleSSE.AspNetCore;
 using StateleSSE.AspNetCore.GroupRealtime;
+using WindMill;
 
 var builder = WebApplication.CreateBuilder(args);
 var env = ConfigurationHelper.ConfigureEnvironment(builder);
@@ -48,7 +49,12 @@ builder.Services.Configure<HostOptions>(opts => opts.ShutdownTimeout = TimeSpan.
 builder.Services.AddInMemorySseBackplane();
 builder.Services.AddEfRealtime();
 builder.Services.AddGroupRealtime();
-builder.Services.AddDbContext<WindMill.DataAccess.MyDbContext>(options => options.UseNpgsql(db));
+builder.Services.AddDbContext<WindMill.DataAccess.MyDbContext>((sp, options) =>
+{
+    options.UseNpgsql(db);
+    options.AddEfRealtimeInterceptor(sp);
+});
+builder.Services.AddCors();
 builder.Services.AddScoped<SaveData>();
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<DataSeeder>();
@@ -60,9 +66,19 @@ app.UseAuthorization();
 app.MapControllers();
 app.UseOpenApi();
 app.UseSwaggerUi();
-
+app.UseCors(c => 
+    c.AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowAnyOrigin()
+        .SetIsOriginAllowed(_ => true));
 var mqtt = app.Services.GetRequiredService<IMqttClientService>();
 await mqtt.ConnectAsync("broker.hivemq.com", 1883);
+
+if (builder.Environment.IsDevelopment())
+{
+    app.GenerateApiClientsFromOpenApi("../WindMillFE/src/generated-ts-client.ts", "./openapi.json").GetAwaiter()
+        .GetResult();
+}
 
 using (var scope = app.Services.CreateScope())
 {
