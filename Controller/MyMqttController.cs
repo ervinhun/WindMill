@@ -15,14 +15,11 @@ public class MyMqttController(ILogger<MyMqttController> logger, SaveData sd) : M
     public async Task SubscribeToTelemetry(string turbineId, object payload)
     {
         var data = JsonSerializer.Serialize(payload);
-        // Deserialize the JSON payload into a TurbineMetric object and save the turbine's name and status
         try
         {
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             var metric = JsonSerializer.Deserialize<TurbineMetric>(data, options);
             if (metric == null) throw new JsonSerializationException("Metric is null after deserialization.");
-            logger.LogInformation(
-                $"Processing {metric.TurbineName} (ID: {metric.TurbineId}). Status: {metric.Status}");
             if (metric.Status != null && metric.Status != "stopped")
                 await sd.SaveTelemetry(metric);
         }
@@ -41,8 +38,6 @@ public class MyMqttController(ILogger<MyMqttController> logger, SaveData sd) : M
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             var alert = JsonSerializer.Deserialize<TurbineAlert>(data, options);
             if (alert == null) throw new JsonSerializationException("Alert is null after deserialization.");
-            logger.LogInformation(
-                $"Processing {alert.Severity} (ID: {alert.TurbineId}). Message: {alert.Message}");
             await sd.SaveAlert(alert);
         }
         catch (JsonException ex)
